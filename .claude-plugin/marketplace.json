@@ -1,0 +1,20 @@
+{
+  "name": "goldsky-compose-agent",
+  "owner": {
+    "name": "Goldsky"
+  },
+  "metadata": {
+    "description": "Goldsky Compose skills for onchain execution"
+  },
+  "allowCrossMarketplaceDependenciesOn": [
+    "goldsky-agent"
+  ],
+  "plugins": [
+    {
+      "name": "goldsky-compose",
+      "source": "./",
+      "description": "Build, deploy, and debug Goldsky Compose apps: TypeScript tasks that react to cron, HTTP, and onchain triggers and write back onchain from managed smart wallets. Oracles, keepers, and detect-decide-execute automation.",
+      "version": "1.0.0"
+    }
+  ]
+}

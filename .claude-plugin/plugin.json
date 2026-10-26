@@ -1,0 +1,40 @@
+{
+  "name": "goldsky-compose",
+  "displayName": "Goldsky Compose",
+  "version": "1.0.0",
+  "description": "Build, deploy, and debug Goldsky Compose apps: TypeScript tasks that react to cron, HTTP, and onchain triggers and write back onchain from managed smart wallets. Oracles, keepers, and detect-decide-execute automation.",
+  "author": {
+    "name": "Goldsky"
+  },
+  "repository": "https://github.com/goldsky-io/goldsky-compose-agent",
+  "homepage": "https://goldsky.com",
+  "icon": "./assets/logo.png",
+  "documentationUrl": "https://docs.goldsky.com/compose/introduction",
+  "supportUrl": "https://docs.goldsky.com/getting-support",
+  "privacyPolicyUrl": "https://goldsky.com/privacy",
+  "termsOfServiceUrl": "https://goldsky.com/terms/terms-and-conditions",
+  "license": "MIT",
+  "keywords": [
+    "goldsky",
+    "compose",
+    "blockchain",
+    "onchain",
+    "oracles",
+    "keepers",
+    "automation",
+    "smart-wallets",
+    "web3"
+  ],
+  "dependencies": [
+    {
+      "name": "goldsky",
+      "marketplace": "goldsky-agent"
+    }
+  ],
+  "mcpServers": {
+    "goldsky-docs": {
+      "type": "http",
+      "url": "https://docs.goldsky.com/mcp"
+    }
+  }
+}
