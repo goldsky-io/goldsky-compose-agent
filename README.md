@@ -41,6 +41,16 @@ Clone both repositories and add both paths to `plugins.local` in your Cursor set
 
 Compose skills deploy contracts and send transactions. Every skill asks for your confirmation before a `deploy`, `deployContract`, `writeContract`, or `secret set`. Read the command before you approve it.
 
+## Updating the website chatbot
+
+The Goldsky website chatbot's knowledge base is fed by the "Sync to Bedrock KB" workflow in [goldsky-io/goldsky-agent](https://github.com/goldsky-io/goldsky-agent), which pulls this repo's `skills/`. It does not run on changes here.
+
+After merging a skill change to `main`, open the Actions tab in goldsky-agent, pick "Sync to Bedrock KB", and click "Run workflow" on `main`. Or run:
+
+```bash
+gh workflow run sync-kb.yml -R goldsky-io/goldsky-agent --ref main
+```
+
 ## Policies
 
 - [Terms of Use](./TERMS.md)
