@@ -1,0 +1,117 @@
+# The repo has no build; these checks guard what installs and marketplace review read.
+name: validate-plugin
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JSON files parse
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            jq -e . "$f" >/dev/null || { echo "::error file=$f::not valid JSON"; fail=1; }
+          done < <(git ls-files '*.json')
+          exit $fail
+
+      - name: Manifest versions agree
+        run: |
+          v=$(jq -r .version .claude-plugin/plugin.json)
+          c=$(jq -r .version .cursor-plugin/plugin.json)
+          [ "$c" = "$v" ] || { echo "::error::.cursor-plugin/plugin.json is $c, .claude-plugin/plugin.json is $v"; exit 1; }
+          jq -e --arg v "$v" 'all(.plugins[]; .version == $v)' .claude-plugin/marketplace.json >/dev/null \
+            || { echo "::error::marketplace.json has a plugin whose version is not $v"; exit 1; }
+          echo "All manifests agree at $v"
+
+      - name: Cursor manifest has no unknown keys
+        run: |
+          # Cursor's plugin schema is additionalProperties:false, and author accepts only name/email.
+          jq -e '
+            (keys - ["name","displayName","description","version","minClientVersions",
+                     "author","publisher","homepage","repository","license","logo",
+                     "keywords","category","tags","commands","agents","skills",
+                     "rules","hooks","variables","mcpServers"]) as $bad
+            | if ($bad | length) > 0 then error("unknown keys: \($bad)") else true end
+          ' .cursor-plugin/plugin.json
+          jq -e '(.author | keys - ["name","email"]) as $b
+                 | if ($b|length) > 0 then error("author has unknown keys: \($b)") else true end
+          ' .cursor-plugin/plugin.json
+
+      - name: Declared paths exist
+        run: |
+          fail=0
+          for p in $(jq -r '.skills // empty, .logo // empty' .cursor-plugin/plugin.json) \
+                   $(jq -r '.icon // empty' .claude-plugin/plugin.json); do
+            case "$p" in /*|*..*) echo "::error::path must be relative with no '..': $p"; fail=1; continue;; esac
+            [ -e "${p%/}" ] || { echo "::error::$p does not exist"; fail=1; }
+          done
+          exit $fail
+
+  skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-save --no-package-lock yaml@2
+      - name: Skill frontmatter, evals, and README table
+        run: |
+          node --input-type=module - <<'JS'
+          import { readFileSync, readdirSync, existsSync } from 'node:fs';
+          import { parseDocument } from 'yaml';
+
+          const readme = readFileSync('README.md', 'utf8');
+          let failed = false;
+          const fail = (file, msg) => { console.log(`::error file=${file}::${msg}`); failed = true; };
+
+          for (const dir of readdirSync('skills', { withFileTypes: true })) {
+            if (!dir.isDirectory()) continue;
+            const file = `skills/${dir.name}/SKILL.md`;
+            if (!existsSync(file)) { fail(`skills/${dir.name}`, 'missing SKILL.md'); continue; }
+            const m = readFileSync(file, 'utf8').match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+            if (!m) { fail(file, 'missing or unclosed YAML frontmatter'); continue; }
+            const doc = parseDocument(m[1]);
+            if (doc.errors.length) { fail(file, doc.errors.map(e => e.message).join('; ')); continue; }
+            const { name, description } = doc.toJS() ?? {};
+            if (typeof name !== 'string' || name.length > 64 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name))
+              fail(file, 'name must be 1-64 lowercase letters, digits, or single hyphens');
+            else if (name !== dir.name) fail(file, `name "${name}" must match directory "${dir.name}"`);
+            if (typeof description !== 'string' || !description.trim() || [...description].length > 1024)
+              fail(file, 'description must be a non-empty string of at most 1024 characters');
+            if (!readme.includes(`\`${dir.name}\``)) fail('README.md', `skill ${dir.name} missing from the Skills table`);
+
+            const evals = `skills/${dir.name}/evals/trigger-eval.json`;
+            if (existsSync(evals)) {
+              const cases = JSON.parse(readFileSync(evals, 'utf8'));
+              if (!Array.isArray(cases) || !cases.every(c =>
+                    typeof c?.query === 'string' && c.query.trim() && typeof c.should_trigger === 'boolean'))
+                fail(evals, 'must be an array of {query: string, should_trigger: boolean}');
+            }
+          }
+          if (failed) process.exit(1);
+          console.log('Skills valid');
+          JS
+
+  plugin-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: claude plugin validate --strict
+        run: |
+          # `plugin validate .` checks only the marketplace manifest; name every target.
+          npx -y @anthropic-ai/claude-code plugin validate .claude-plugin/plugin.json --strict
+          npx -y @anthropic-ai/claude-code plugin validate .claude-plugin/marketplace.json --strict
+          npx -y @anthropic-ai/claude-code plugin validate skills/ --strict
