@@ -11,12 +11,14 @@ Goldsky Compose is the offchain-to-onchain framework for high-stakes systems. Wr
 
 **Before anything else — before you write any `compose.yaml` or task file, quote a field / flag / API shape, or scaffold or deploy an app — read `skills/compose/references/manifest.md`.** Then `cli.md`, `task-context.md`, and `wallets-and-gas.md` as needed. This skill gives the rules and the shape of a build; those files give the exact fields and signatures. The manifest / CLI / API must never be synthesized from memory. Do not emit a manifest or task without the reference loaded.
 
+**In the Goldsky webapp chatbot, read references with `searchKB`.** There is no file access there, and `loadSkill` loads whole skills (`compose`, `compose-doctor`, `onchain-automation`), never a path such as `compose/references/manifest.md`. Wherever this skill family says to read a file under `skills/compose/references/`, call `searchKB` with that file's topic instead: e.g. `compose.yaml manifest fields tasks triggers` for `manifest.md`, or `bitcoin-oracle example in-app flow ABI` for `examples/bitcoin-oracle.md`. If the results miss a part a step needs (an ABI, contract source, a task file), run another `searchKB` for that part.
+
 ## Skill family — load `compose` first
 
 `compose` is the entry point for anything Goldsky Compose: **load it first, then pull in the others as needed.**
 
 - **General build rules and concepts** — this skill. It governs every Compose conversation, in-app or local.
-- **A specific example** (bitcoin oracle, VRF, dividend distribution, compliance-gated payments) — read the matching file under `skills/compose/references/examples/`. Each carries that app's source and specifics and relies on the rules here; it does not repeat them.
+- **A specific example** (bitcoin oracle, VRF, dividend distribution, compliance-gated payments) — read the matching file under `skills/compose/references/examples/` (in the webapp chatbot, via `searchKB`; see Step 0). Each carries that app's source and specifics and relies on the rules here; it does not repeat them.
 - **Any field, flag, manifest shape, or API signature** — `skills/compose/references/`. Consult it before writing any `compose.yaml` or task file.
 - **A broken app** — `/compose-doctor`.
 
@@ -40,6 +42,7 @@ The survey against this catalog is a required build step — see **Step 3** belo
 - **When unsure about anything that affects how the app works, ask rather than proceed.**
 - **Offer to author a contract when none exists.** If the app must write onchain but the user has no contract, OFFER to write a minimal purpose-built Solidity contract and deploy it via `goldsky compose deployContract <file.sol>`. Interview them first for exactly what the contract must store/do, then show the source and the exact deploy command as the approval ask — this IS the show-command-and-confirm safety rule, so don't double-ask. The cloud `deployContract` path is gas-sponsored on the 10-chain Alchemy set (Ethereum, Sepolia, Polygon, Polygon Amoy, Arbitrum, Arbitrum Sepolia, Optimism, Optimism Sepolia, Base, Base Sepolia — chain IDs 1, 11155111, 137, 80002, 42161, 421614, 10, 11155420, 8453, 84532). On a chain outside that set it fails with `No Alchemy bundler URL for chain <id>` — say so honestly and use `forge create` with a funded key (the ABI still lands in `src/contracts/` either way; the constructor args are unchanged). Runtime task-gas sponsorship is a different, broader set — see `references/wallets-and-gas.md`. Do not tell the user that only Base / Base Sepolia can be sponsored.
 - **Version-check before `deployContract` / `writeContract`.** Run `goldsky compose --version` (prints `goldsky compose <version>`, e.g. `goldsky compose 0.8.1`) before any flow that deploys or writes a contract. If the version is below 0.8.1, or the command/flag is unrecognized, tell the user and OFFER to run `goldsky compose update` for them — never just instruct — then re-check before continuing.
+- **Default the app name; don't interview for it.** Use the name the user gave. Otherwise use the example's suggested name (`bitcoin-oracle`, `vrf-app`, …) or a short kebab-case name derived from the request, adding a suffix if the project already has an app by that name (in-app: `getComposeApp`; CLI: `goldsky compose list`). The name scopes named wallets and salts every `deployContract` CREATE2 address, so state it in your reply before the first wallet or contract step; the user can change it then. Never spend a question on the name or ask the user to choose between equivalent names. The chain, contract, trigger, wallet, secrets, and every deploy confirmation stay explicit.
 
 ## Boundaries
 
@@ -298,6 +301,7 @@ From the user's natural-language prompt, **derive** as many of these as possible
 - **Secrets vs config** — only *sensitive* values (API keys, private keys, auth tokens) go in the `secrets:` array. A **contract address is plain non-secret config** — put it in `env:` (manifest) or in the task file, not in `secrets`.
 - **Target contract** — if the app writes onchain, it needs a contract to write to. If the user names an existing one, get its address (+ ABI; the ABI only matters for pre-existing contracts — `deployContract` saves it automatically). If they have none, take the authorship-offer fork from the Golden rules: interview for what it must store/do, then show source + the `deployContract` command as the approval ask.
 - **`api_version`** — default to `stable` unless user asks otherwise.
+- **App name** — default it per the Golden rules; state it, don't ask.
 
 Only ask the user for fields you couldn't derive.
 
