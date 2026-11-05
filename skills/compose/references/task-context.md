@@ -99,7 +99,7 @@ type OnchainEvent = {
 };
 ```
 
-For `onchain_event`-triggered tasks, the payload argument is the `OnchainEvent` itself: `main(context, event: OnchainEvent)`, then `decodeEventLog(abi, event)` (or `evm.contracts.<Name>.decodeEventLog(event)` after codegen) returns the decoded struct. It is not wrapped in `{ log }`. `onchain_event` triggers fire only for a deployed app, never under `compose start`; to exercise the task locally, `goldsky compose callTask <task> '<event json>' --env local` with a sample `OnchainEvent` (copy a real log from a block explorer).
+For `onchain_event`-triggered tasks, the payload argument is the `OnchainEvent` itself: `main(context, event: OnchainEvent)`, then `decodeEventLog(abi, event)` (or `evm.contracts.<Name>.decodeEventLog(event)` after codegen) returns the decoded log as `{ eventName, args }` (viem's shape, passed through JSON, so `bigint` values such as `uint256` arrive as decimal strings). It is not wrapped in `{ log }`. `onchain_event` triggers fire only for a deployed app, never under `compose start`; to exercise the task locally, `goldsky compose callTask <task> '<event json>' --env local` with a sample `OnchainEvent` (copy a real log from a block explorer).
 
 ### IWallet
 
@@ -177,3 +177,5 @@ interface Collection<T> {
 `collection<T>(name, indexes?)` takes `CollectionIndexSpec[]`, not `string[]`. `findMany` options are `{ limit?, offset? }`: `skip` does not exist and is silently ignored, so paging written against it always returns page 1. Reads return `T & { id: string }`. A filter is flat `Record<string, string | number | boolean | HelperValue>`, so nested-path filters are not supported.
 
 Filter operators: `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$ne`, `$nin`, `$exists`. Equality: `{ field: value }`.
+
+`findMany` has no sort option and no count, and the query has no `ORDER BY`, so result order is unspecified. For "the latest N", store a sortable field (for example a timestamp) on every document, read with a limit large enough to cover the data, sort in the task, then slice. Do not assume insertion order.
