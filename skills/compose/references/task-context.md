@@ -146,6 +146,8 @@ type TransactionConfirmation = {
 };
 ```
 
+`readContract` decodes the result from the signature string, so a read must declare its outputs: `"count() returns (uint256)"`, `"balanceOf(address) returns (uint256)"`. Without `returns (...)` the call succeeds but the value comes back `undefined`. Typed contract classes from codegen add the return type for you.
+
 `TransactionReceipt` carries `status: "success" | "reverted"`, `blockNumber: bigint`, `blockHash`, `gasUsed: bigint`, `effectiveGasPrice: bigint`, `cumulativeGasUsed: bigint`, `from`, `to`, `contractAddress: Address | null`, `logs: Log[]`, `logsBloom`, `transactionHash`, `transactionIndex`, `type`.
 
 Specifically: there is no `string | AbiItem` overload; `retryConfig` is a separate 6th positional arg, not a key in an options bag; there are no `gas`/`gasPrice` options on `writeContract`; the return has no `chainId` and no top-level `blockNumber` (the `TxResult` type as documented does not exist); `sendTransaction` is object-first, the positional `(chain, to, value, data?, options?)` form does not exist; `simulate` returns `{ result, request }` and throws on revert, so `SimulateResult { success, ... }` and `if (!sim.success)` are dead code; `getBalance` returns a decimal wei **string**, so arithmetic without `BigInt(...)` string-concatenates; `onReorg.action.type` is `"replay" | "log" | "task"`, there is no `"skip"`.
