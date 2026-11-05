@@ -53,9 +53,9 @@ interface FetchFn {
 callTask<Args, T>(name: string, args: Args, retryConfig?: RetryConfig): Promise<T>
 ```
 
-- `T` is whatever the callee returns. A `void`-returning task resolves to `undefined`.
+- `T` is whatever the callee returns. A `void`-returning task: in compose 0.17.1 and earlier the local server sends an empty body and `ctx.callTask` rejects (the host calls `response.json()` on it); in newer versions the server sends JSON `null` and `ctx.callTask` resolves to `null`. Do not rely on `undefined` in either case; return a JSON-serializable value from any task another task awaits.
 - Use for task-to-task invocation (parent/child patterns).
-- `goldsky compose callTask <task> --env local` parses the task's return as JSON. If `main` returns nothing, the CLI prints `Invalid task response, must be JSON` and exits 1 even though the run succeeded (the server log shows `succeeded` with `result: undefined`). Return a JSON-serializable object, such as `{ ok: true }`, from any task you plan to call this way.
+- `goldsky compose callTask <task> --env local` parses the task's return as JSON. In compose 0.17.1 and earlier, if `main` returns nothing the CLI prints `Invalid task response, must be JSON` and exits 1 even though the run succeeded (the server log shows `succeeded` with `result: undefined`). Newer versions print `Task returned no value` and exit 0. On any version, returning a JSON-serializable object such as `{ ok: true }` works everywhere.
 
 ### `sideEffect`
 
@@ -147,7 +147,7 @@ type TransactionConfirmation = {
 };
 ```
 
-`readContract` decodes the result from the signature string, so a read must declare its outputs: `"count() returns (uint256)"`, `"balanceOf(address) returns (uint256)"`. Without `returns (...)` the call succeeds but the value comes back `undefined`. Typed contract classes from codegen add the return type for you.
+`readContract` decodes the result from the signature string, so a read must declare its outputs: `"count() returns (uint256)"`, `"balanceOf(address) returns (uint256)"`. In compose 0.17.1 and earlier, a signature without `returns (...)` succeeds but the value comes back `undefined`; newer versions throw a clear error instead. Typed contract classes from codegen add the return type for you.
 
 `TransactionReceipt` carries `status: "success" | "reverted"`, `blockNumber: bigint`, `blockHash`, `gasUsed: bigint`, `effectiveGasPrice: bigint`, `cumulativeGasUsed: bigint`, `from`, `to`, `contractAddress: Address | null`, `logs: Log[]`, `logsBloom`, `transactionHash`, `transactionIndex`, `type`.
 
