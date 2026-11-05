@@ -55,6 +55,7 @@ callTask<Args, T>(name: string, args: Args, retryConfig?: RetryConfig): Promise<
 
 - `T` is whatever the callee returns. A `void`-returning task resolves to `undefined`.
 - Use for task-to-task invocation (parent/child patterns).
+- `goldsky compose callTask <task> --env local` parses the task's return as JSON. If `main` returns nothing, the CLI prints `Invalid task response, must be JSON` and exits 1 even though the run succeeded (the server log shows `succeeded` with `result: undefined`). Return a JSON-serializable object, such as `{ ok: true }`, from any task you plan to call this way.
 
 ### `sideEffect`
 
