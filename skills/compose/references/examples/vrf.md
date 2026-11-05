@@ -513,11 +513,11 @@ If `goldsky compose --version` prints `compose CLI is not installed`, run `golds
 
 VRF-specific, Foundry: **Foundry (`forge` / `cast`) is NOT required on the recommended path.** `deployContract` routes through the cloud's Alchemy bundler, which covers Ethereum, Sepolia, Polygon, Polygon Amoy, Arbitrum, Arbitrum Sepolia, Optimism, Optimism Sepolia, Base and Base Sepolia (chain IDs 1, 11155111, 137, 80002, 42161, 421614, 10, 11155420, 8453, 84532). On a chain outside that set the deploy fails with `No Alchemy bundler URL for chain <id>`, so use the `forge create` fallback there. Multi-provider coverage is tracked as FOU-991. Branch B's `goldsky compose deployContract` bundles its own compiler, and the Step 8 smoke test uses the gas-sponsored `goldsky compose writeContract`. Foundry IS required for that forge fallback or the **cast-based** smoke-test alternative in Step 8, so on the recommended path, treat Foundry as optional.
 
-## Step 1 — Configuration
+## Step 1: Configuration
 
 Per the golden rules in `/compose`, take everything the user already said and use the recommended option for the rest. In CLI mode (Bash available) do not stop to ask these questions: use the defaults below, run locally against a fork (`--fork-chains`), and list the choices in your final message so the user can change them. Ask first only before a cloud deploy or `deployContract`. (The in-app `deployComposeApp` flow above is different: it asks.)
 
-1. **App name**: default `vrf-app` unless the user named one; set it as the top-level `name:` in `compose.yaml` (the degit scaffold ships a stale `name: "compose-vrf"` — overwrite it). The name is hard to change later: it scopes named wallets and participates in the CREATE2 salt for every `deployContract`, so tell the user what you chose.
+1. **App name**: default `vrf-app` unless the user named one; set it as the top-level `name:` in `compose.yaml` (the degit scaffold ships a stale `name: "compose-vrf"`, so overwrite it). The name is hard to change later: it scopes named wallets and participates in the CREATE2 salt for every `deployContract`, so tell the user what you chose.
 2. **"Which chain?"** — **Base Sepolia (recommended)** because it has the ready, fully-unpermissioned shared contract (nothing to deploy). Other chains require deploying your own. Use the camelCase form in TS (`baseSepolia`) and snake_case in `compose.yaml` (`base_sepolia`).
 3. **RandomnessConsumer contract**: two options:
    - **Reuse the shared contract on Base Sepolia (recommended)** — nothing to deploy. Wire `0x6273AB73C95Ba2233281F1eb8aa3b21D9352AD6d` (mention the address in prose, not in any option label). Demos/getting-started only, not production.

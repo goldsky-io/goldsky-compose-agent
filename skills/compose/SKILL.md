@@ -297,7 +297,7 @@ Drop an ABI into `src/contracts/Oracle.json`. After `goldsky compose codegen` (o
 
 Only activate when Bash is available.
 
-### Step 1 — Install the CLI
+### Step 1: Install the CLI
 
 If `goldsky compose --version` fails, follow `/auth-setup` and run its bundled installer with `compose`. Restore PATH in each new shell; keep Windows commands inside the same WSL distribution. Do not check auth or ask for an API key here: login is deferred until `deploy`, `deployContract`, `secret set`, or a cloud read-back needs it (see "Verify auth first" before Step 8).
 
