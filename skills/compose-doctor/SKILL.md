@@ -30,7 +30,7 @@ When the user has the app's source and the symptom is that `goldsky compose star
 
 1. If `goldsky compose --version` prints `compose CLI is not installed`, install it (`goldsky compose install`, or `/auth-setup`'s installer with `compose`) and continue. Do not stop at "the CLI is missing" and fix by reading alone.
 2. Read `compose.yaml` and every task file against `skills/compose/references/manifest.md` (trigger fields, `env`, `secrets`, import rule).
-3. Run `goldsky compose start` from the app directory and fix the first error it prints (`Manifest validation failed`, `Local secret validation failed`, bundling errors). `start` does not watch files and does not exit on its own: run it with a timeout or in the background, and restart it after each fix.
+3. Before editing anything, run `goldsky compose start` from the app directory to see the real first error (`Manifest validation failed`, `Local secret validation failed`, bundling errors), then fix errors one at a time and re-run. Reading against the reference in step 2 finds suspects; `start` confirms them. `start` does not watch files and does not exit on its own: run it with a timeout or in the background, and restart it after each fix.
 4. Finish only when `start` reports `Startup complete!`. For a task you changed, also run `goldsky compose callTask <task> '{}' --env local` against the running server and show the result.
 
 ### Step 1 — Verify Auth
