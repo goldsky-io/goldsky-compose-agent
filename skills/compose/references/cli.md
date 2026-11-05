@@ -4,6 +4,8 @@
 
 All commands accept `-t/--token` and `--api-server`; the `-n/--name` flag selects the app by name (falls back to `-m/--manifest`, then `./compose.yaml`). Token precedence is `--token` > the `GOLDSKY_API_TOKEN` env var > `~/.goldsky/auth_token` (written by `goldsky login`). With none of the three the CLI errors with "Please run goldsky login, set GOLDSKY_API_TOKEN, or pass --token to the command."
 
+> **Scale plan.** Cloud commands (`deploy`, `secret set`, `wallet create`, `deployContract`, `writeContract`) return 403 `Compose requires a Scale plan. Visit https://app.goldsky.com/dashboard/settings to upgrade, or reach out to sales@goldsky.com.` on a Starter plan. Have the user add a card at the settings URL (or contact sales), then retry.
+
 > **Non-interactive guards.** `init` without a name, `deploy` with a major `api_version` mismatch (needs `--force`, message "Refusing to deploy with a major api_version mismatch in non-interactive mode. Pass --force to override."), and `clean` without `-f` ("Use --force for non-interactive cleanup.") all abort in a non-TTY. Agents always run non-TTY.
 
 ### Lifecycle
@@ -65,6 +67,8 @@ Compile and deploy a contract, or submit a write call, straight from the CLI —
 
 Run from the app directory - it reads `compose.yaml` for the app name; app name + project id derive the deterministic CREATE2 salt. On gas-sponsored chains (Base `8453`, Base Sepolia `84532`) it needs **no funded key and no RPC URL**. `deployContract` routes through the cloud's Alchemy bundler, which covers Ethereum, Sepolia, Polygon, Polygon Amoy, Arbitrum, Arbitrum Sepolia, Optimism, Optimism Sepolia, Base and Base Sepolia (chain IDs 1, 11155111, 137, 80002, 42161, 421614, 10, 11155420, 8453, 84532). On a chain outside that set the deploy fails with `No Alchemy bundler URL for chain <id>`, so use the `forge create` fallback there (the constructor args stay the same; supply the ABI to `src/contracts/` yourself). Multi-provider coverage is tracked as FOU-991. Runtime task-gas sponsorship (see [Gas Sponsorship](#gas-sponsorship)) covers many more chains than this deploy endpoint.
 
+**Auth.** `deployContract` and `writeContract` call the Goldsky cloud, so with no token they fail (`Please run goldsky login, set GOLDSKY_API_TOKEN, or pass --token to the command.`, or `Not authenticated. Generate an API key from Settings > API Keys in the Goldsky dashboard.` for an invalid one) even if the app itself is only running locally. Without auth, say so and give the user the exact command to run after `goldsky login`. A task's own `wallet.writeContract` under `compose start --fork-chains` does not use this path and needs no login, but it needs a contract already present on the fork (an existing deployed address).
+
 **Wallet lifecycle.** `wallet create` and `wallet list` now work even before the app is deployed (they provision the hosted store on demand, like `deployContract`/`writeContract`); `wallet create` returns the wallet's address pre-deploy. To authorize a wallet inside a constructor: `wallet create <name>` → `deployContract --constructor-args <address>` → wire the address into the task → `compose deploy`.
 
 **CREATE2 collisions.** Re-deploying the same contract source + constructor args from the same app hits a CREATE2 collision: the platform returns HTTP 400 `CONTRACT_ALREADY_DEPLOYED` and the CLI reports "This contract has already been deployed with this app. The same contract + app name + project produces the same address via CREATE2." with exit 1 and no Deploy Block (`--json` code `ALREADY_DEPLOYED`; any other deploy failure is `DEPLOY_CONTRACT_FAILED`). A changed constructor arg, changed source, or a different app name produces a fresh address. Note the **app name participates in the CREATE2 salt** - renaming the app changes every future deploy address. On success it prints the contract address, tx hash, and **Deploy Block**, and **auto-saves the ABI to `src/contracts/<Name>.json`** - then `compose codegen` gives typed bindings.
@@ -84,6 +88,8 @@ Run from the app directory - it reads `compose.yaml` for the app name; app name 
 | `--json` | JSON output (see CLI JSON Schemas). |
 
 ### Read-back
+
+These commands read the **deployed cloud app** (they take app targeting, not `--env local`, so `--env local` is rejected as an unknown option). To inspect data from a local `compose start` run, add an `http` task that returns `findMany` results and call it with `callTask --env local`.
 
 | Command | Purpose | Key flags |
 | --- | --- | --- |

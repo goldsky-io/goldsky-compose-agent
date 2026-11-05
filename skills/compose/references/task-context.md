@@ -53,8 +53,9 @@ interface FetchFn {
 callTask<Args, T>(name: string, args: Args, retryConfig?: RetryConfig): Promise<T>
 ```
 
-- `T` is whatever the callee returns. A `void`-returning task resolves to `undefined`.
+- `T` is whatever the callee returns. A `void`-returning task: in compose 0.17.1 and earlier the local server sends an empty body and `ctx.callTask` rejects (the host calls `response.json()` on it); in newer versions the server sends JSON `null` and `ctx.callTask` resolves to `null`. Do not rely on `undefined` in either case; return a JSON-serializable value from any task another task awaits.
 - Use for task-to-task invocation (parent/child patterns).
+- `goldsky compose callTask <task> --env local` parses the task's return as JSON. In compose 0.17.1 and earlier, if `main` returns nothing the CLI prints `Invalid task response, must be JSON` and exits 1 even though the run succeeded (the server log shows `succeeded` with `result: undefined`). Newer versions print `Task returned no value` and exit 0. On any version, returning a JSON-serializable object such as `{ ok: true }` works everywhere.
 
 ### `sideEffect`
 
@@ -98,7 +99,7 @@ type OnchainEvent = {
 };
 ```
 
-For `onchain_event`-triggered tasks, `params` contains `{ log: OnchainEvent }` plus chain-specific metadata. `decodeEventLog(abi, params.log)` returns the decoded struct.
+For `onchain_event`-triggered tasks, the payload argument is the `OnchainEvent` itself: `main(context, event: OnchainEvent)`, then `decodeEventLog(abi, event)` (or `evm.contracts.<Name>.decodeEventLog(event)` after codegen) returns the decoded log as `{ eventName, args }` (viem's shape, passed through JSON, so `bigint` values such as `uint256` arrive as decimal strings). It is not wrapped in `{ log }`. `onchain_event` triggers fire only for a deployed app, never under `compose start`; to exercise the task locally, `goldsky compose callTask <task> '<event json>' --env local` with a sample `OnchainEvent` (copy a real log from a block explorer).
 
 ### IWallet
 
@@ -146,6 +147,8 @@ type TransactionConfirmation = {
 };
 ```
 
+`readContract` decodes the result from the signature string, so a read must declare its outputs: `"count() returns (uint256)"`, `"balanceOf(address) returns (uint256)"`. In compose 0.17.1 and earlier, a signature without `returns (...)` succeeds but the value comes back `undefined`; newer versions throw a clear error instead. Typed contract classes from codegen add the return type for you.
+
 `TransactionReceipt` carries `status: "success" | "reverted"`, `blockNumber: bigint`, `blockHash`, `gasUsed: bigint`, `effectiveGasPrice: bigint`, `cumulativeGasUsed: bigint`, `from`, `to`, `contractAddress: Address | null`, `logs: Log[]`, `logsBloom`, `transactionHash`, `transactionIndex`, `type`.
 
 Specifically: there is no `string | AbiItem` overload; `retryConfig` is a separate 6th positional arg, not a key in an options bag; there are no `gas`/`gasPrice` options on `writeContract`; the return has no `chainId` and no top-level `blockNumber` (the `TxResult` type as documented does not exist); `sendTransaction` is object-first, the positional `(chain, to, value, data?, options?)` form does not exist; `simulate` returns `{ result, request }` and throws on revert, so `SimulateResult { success, ... }` and `if (!sim.success)` are dead code; `getBalance` returns a decimal wei **string**, so arithmetic without `BigInt(...)` string-concatenates; `onReorg.action.type` is `"replay" | "log" | "task"`, there is no `"skip"`.
@@ -174,3 +177,5 @@ interface Collection<T> {
 `collection<T>(name, indexes?)` takes `CollectionIndexSpec[]`, not `string[]`. `findMany` options are `{ limit?, offset? }`: `skip` does not exist and is silently ignored, so paging written against it always returns page 1. Reads return `T & { id: string }`. A filter is flat `Record<string, string | number | boolean | HelperValue>`, so nested-path filters are not supported.
 
 Filter operators: `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$ne`, `$nin`, `$exists`. Equality: `{ field: value }`.
+
+`findMany` has no sort option and no count, and the query has no `ORDER BY`, so result order is unspecified. For "the latest N", store a sortable field (for example a timestamp) on every document, read with a limit large enough to cover the data, sort in the task, then slice. Do not assume insertion order.

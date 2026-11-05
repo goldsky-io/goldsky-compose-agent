@@ -11,7 +11,7 @@ This template supplies only what's specific to the dividend/corporate-actions ap
 
 **Before anything else — before you answer, ask a question, scaffold a file, or run any command — load the two base skills this template depends on:**
 
-1. **`Skill(compose)`** — the always-on Compose guide: the golden rules (never assume anything about the app on the user's behalf; ask when unsure) and general build guidance.
+1. **`Skill(compose)`**, the always-on Compose guide: the golden rules (derive from the request, default the rest and state the assumptions, confirm before anything that spends real funds or deploys to cloud) and general build guidance.
 2. **Read `skills/compose/references/manifest.md`** (then `cli.md`, `task-context.md`, `wallets-and-gas.md` as needed) — the manifest / field / API reference; consult before writing any `compose.yaml` or task file.
 
 This template deliberately omits those rules and that reference — they are **required** to build correctly and are not repeated here. Do not proceed until both are loaded.
@@ -1558,11 +1558,11 @@ contract ShareToken {
 Pull just the corporate-actions example into a fresh directory (no git history):
 
 ```bash
-npx -y degit goldsky-io/documentation-examples/compose/corporate-actions#6abe62878cb92f2569538ba9572b049ed5949a01 dividend-distribution
+npx -y degit goldsky-io/documentation-examples/compose/corporate-actions dividend-distribution
 cd dividend-distribution
 ```
 
-If `npx degit` is unavailable, fall back to a sparse clone:
+`degit` fetches the default branch (it cannot fetch an arbitrary commit). If it is unavailable, or you need the exact commit this skill was written against, use a sparse clone:
 
 ```bash
 git clone --filter=blob:none --sparse https://github.com/goldsky-io/documentation-examples.git
@@ -1571,7 +1571,7 @@ cd documentation-examples && git checkout 6abe62878cb92f2569538ba9572b049ed5949a
 
 If the user already cloned the example, skip this and `cd` into it.
 
-**Before any wallet or contract step, ask the app name — the FIRST interview question:** *"What should the app be called? (suggest `corporate-actions`)"*. The name is hard to change later: it scopes named wallets (e.g. `corp-actions-operator`) and participates in the CREATE2 salt for every `deployContract` (Step 1 Branch B reads the app name straight from `compose.yaml`), so it must be settled now. Accept the default `corporate-actions` on a shrug. The degit scaffold ships `name: "corporate-actions"` in `compose.yaml` — overwrite that `name:` with the user's chosen name before moving on.
+**App name (CLI mode):** default `corporate-actions` unless the user named one; do not stop to ask. Tell the user the name you chose in your final message, because it is hard to change later: it scopes named wallets (e.g. `corp-actions-operator`) and participates in the CREATE2 salt for every `deployContract` (Step 1 Branch B reads the app name straight from `compose.yaml`). The degit scaffold ships `name: "corporate-actions"` in `compose.yaml`; overwrite that `name:` if the user chose a different name. (The in-app `deployComposeApp` flow above asks for the name first.)
 
 ## Preflight
 
