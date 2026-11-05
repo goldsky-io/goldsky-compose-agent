@@ -87,6 +87,8 @@ Run from the app directory - it reads `compose.yaml` for the app name; app name 
 
 ### Read-back
 
+These commands read the **deployed cloud app** (they take app targeting, not `--env local`, so `--env local` is rejected as an unknown option). To inspect data from a local `compose start` run, add an `http` task that returns `findMany` results and call it with `callTask --env local`.
+
 | Command | Purpose | Key flags |
 | --- | --- | --- |
 | `compose runs [runId]` | List runs, or show one run's detail | `--limit`, `--offset`, `--task <name>`, `--status <success\|error\|pending>`, `--since <1h\|30m\|7d>`, `--until <duration>`, `--json`, `-n`/`-m`, `-t`, `--api-server` |
