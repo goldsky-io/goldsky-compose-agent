@@ -42,11 +42,11 @@ Pick the mode from the tools available to you:
 Pull just the bitcoin-oracle example into a fresh directory (no git history):
 
 ```bash
-npx -y degit goldsky-io/documentation-examples/compose/bitcoin-oracle#6abe62878cb92f2569538ba9572b049ed5949a01 bitcoin-oracle
+npx -y degit goldsky-io/documentation-examples/compose/bitcoin-oracle bitcoin-oracle
 cd bitcoin-oracle
 ```
 
-If `npx degit` is unavailable, fall back to a sparse clone:
+`degit` fetches the default branch (it cannot fetch an arbitrary commit). If it is unavailable, or you need the exact commit this skill was written against, use a sparse clone:
 
 ```bash
 git clone --filter=blob:none --sparse https://github.com/goldsky-io/documentation-examples.git

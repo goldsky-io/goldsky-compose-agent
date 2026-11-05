@@ -494,11 +494,11 @@ contract RandomnessConsumer {
 Pull just the VRF example into a fresh directory (no git history):
 
 ```bash
-npx -y degit goldsky-io/documentation-examples/compose/VRF#6abe62878cb92f2569538ba9572b049ed5949a01 compose-vrf
+npx -y degit goldsky-io/documentation-examples/compose/VRF compose-vrf
 cd compose-vrf
 ```
 
-If `npx -y degit` is unavailable, fall back to a sparse clone:
+`degit` fetches the default branch (it cannot fetch an arbitrary commit). If it is unavailable, or you need the exact commit this skill was written against, use a sparse clone:
 
 ```bash
 git clone --filter=blob:none --sparse https://github.com/goldsky-io/documentation-examples.git
