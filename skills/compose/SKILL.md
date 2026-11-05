@@ -73,7 +73,7 @@ Before running commands, check if the `Bash` tool is available:
 
 ### Install
 
-Follow `/auth-setup` and run its bundled installer with `compose`. It installs and verifies the base CLI and this extension without sudo or prompts. On Windows, use the WSL entry point described there. Authentication remains a manual user step.
+Follow `/auth-setup` and run its bundled installer with `compose`. It installs and verifies the base CLI and this extension without sudo or prompts. On Windows, use the WSL entry point described there. Authentication remains a manual user step, and it is not needed yet: scaffolding and `goldsky compose start` (including `--fork-chains` and `callTask --env local`) run without a login. Do not start `goldsky login` or stop to ask for it up front. Write and run the app locally first, then ask for login in your final message only for what needs it (`deploy`, `deployContract`, `secret set`, cloud read-backs), saying what is already built.
 
 For each new shell/tool call:
 
