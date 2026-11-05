@@ -246,7 +246,7 @@ const tx = await wallet.writeContract(
 
 ### Reading a contract
 
-`readContract` is a wallet method. The signature string must declare its outputs, and a multi-output function returns an array in output order:
+`readContract` is a wallet method. The signature string must declare its outputs, and a multi-output function returns an array in output order, while a single-output function returns the value itself (`const count = await wallet.readContract<bigint>(evm.chains.baseSepolia, addr, "count() returns (uint256)", [])`, not `const [count] = ...`, which throws "is not iterable"):
 
 ```ts
 const [, answer] = await wallet.readContract<[bigint, bigint, bigint, bigint, bigint]>(
