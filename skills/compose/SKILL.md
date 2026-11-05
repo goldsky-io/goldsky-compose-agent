@@ -56,6 +56,8 @@ Before running commands, check if the `Bash` tool is available:
 
 ## What Compose Does
 
+Compose is generally available: there is no invite, waitlist, or beta, so never tell the user it is invite-only or in beta. Anyone can sign up at https://app.goldsky.com/signup. Local development needs no account. Deploying and cloud features (`deploy`, `secret set`, wallets, `deployContract`, `writeContract`) need a **Scale** plan (a Starter plan cannot deploy Compose). A Starter account upgrades to Scale by adding a credit card.
+
 - Serverless TypeScript runtime for EVM-aware tasks.
 - Three trigger types: **cron**, **HTTP**, **onchain_event**.
 - **Smart wallets** (managed by Goldsky, gas-sponsored by default) or **BYO EOA** wallets (user-supplied private key).
@@ -73,7 +75,7 @@ Before running commands, check if the `Bash` tool is available:
 
 ### Install
 
-Follow `/auth-setup` and run its bundled installer with `compose`. It installs and verifies the base CLI and this extension without sudo or prompts. On Windows, use the WSL entry point described there. Authentication remains a manual user step, and it is not needed yet: scaffolding and `goldsky compose start` (including `--fork-chains` and `callTask --env local`) run without a login. Do not start `goldsky login` or stop to ask for it up front. Write and run the app locally first, then ask for login in your final message only for what needs it (`deploy`, `deployContract`, `secret set`, cloud read-backs), saying what is already built.
+Follow `/auth-setup` and run its bundled installer with `compose`. It installs and verifies the base CLI and this extension without sudo or prompts. On Windows, use the WSL entry point described there. Authentication remains a manual user step, and it is not needed yet: scaffolding and `goldsky compose start` (including `--fork-chains` and `callTask --env local`) run without a login. Do not start `goldsky login` or stop to ask for it up front. When you do ask, also say that deploying needs a Scale plan (add a card at https://app.goldsky.com/dashboard/settings). Write and run the app locally first, then ask for login in your final message only for what needs it (`deploy`, `deployContract`, `secret set`, cloud read-backs), saying what is already built.
 
 For each new shell/tool call:
 
@@ -350,6 +352,8 @@ Replace the scaffold's task file with logic derived from the prompt. Use the cap
 ### Step 8 — Deploy
 
 `goldsky compose deploy`. Expect progress: "Building Dedicated app database…" → "Deploying app…" → "Provisioning infra…" (can take a minute or two on first deploy).
+
+If deploy returns 403 `Compose requires a Scale plan. Visit https://app.goldsky.com/dashboard/settings to upgrade, or reach out to sales@goldsky.com.`, the account is on Starter. Tell the user to upgrade at https://app.goldsky.com/dashboard/settings by adding a card (or contact sales@goldsky.com), then retry the deploy.
 
 ### Step 9 — Verify
 

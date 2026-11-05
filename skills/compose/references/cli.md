@@ -4,6 +4,8 @@
 
 All commands accept `-t/--token` and `--api-server`; the `-n/--name` flag selects the app by name (falls back to `-m/--manifest`, then `./compose.yaml`). Token precedence is `--token` > the `GOLDSKY_API_TOKEN` env var > `~/.goldsky/auth_token` (written by `goldsky login`). With none of the three the CLI errors with "Please run goldsky login, set GOLDSKY_API_TOKEN, or pass --token to the command."
 
+> **Scale plan.** Cloud commands (`deploy`, `secret set`, wallets, `deployContract`, `writeContract`) return 403 `Compose requires a Scale plan. Visit https://app.goldsky.com/dashboard/settings to upgrade, or reach out to sales@goldsky.com.` on a Starter plan. Have the user add a card at the settings URL (or contact sales), then retry.
+
 > **Non-interactive guards.** `init` without a name, `deploy` with a major `api_version` mismatch (needs `--force`, message "Refusing to deploy with a major api_version mismatch in non-interactive mode. Pass --force to override."), and `clean` without `-f` ("Use --force for non-interactive cleanup.") all abort in a non-TTY. Agents always run non-TTY.
 
 ### Lifecycle
