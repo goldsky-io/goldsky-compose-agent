@@ -18,7 +18,7 @@ This template supplies only what's specific to the compliance app — how it wor
 
 **Before anything else — before you answer, ask a question, scaffold a file, or run any command — load the two base skills this template depends on:**
 
-1. **`Skill(compose)`** — the always-on Compose guide: the golden rules (never assume anything about the app on the user's behalf; ask when unsure) and general build guidance.
+1. **`Skill(compose)`**, the always-on Compose guide: the golden rules (derive from the request, default the rest and state the assumptions, confirm before anything that spends real funds or deploys to cloud) and general build guidance.
 2. **Read `skills/compose/references/manifest.md`** (then `cli.md`, `task-context.md`, `wallets-and-gas.md` as needed) — the manifest / field / API reference; consult before writing any `compose.yaml` or task file. In the webapp chatbot, retrieve it with `searchKB` (see `/compose` Step 0), not `loadSkill`.
 
 This template deliberately omits those rules and that reference — they are **required** to build correctly and are not repeated here. Do not proceed until both are loaded.
@@ -835,21 +835,22 @@ The `goldsky` CLI and auth checks are the standard Compose preflight (see `/comp
 2. **`cast`** — `cast --version`. If `cast` is missing, skip the Foundry alternative in Step 7. Do not install Foundry. Used only for that alternative (`forge` is not required — `deployContract` compiles in-CLI).
 3. **No OpenZeppelin install needed.** All contracts are self-contained — `IERC20` is inlined as a two-function interface in the escrow contract, and `MockUSDC` is a standalone ERC20 implementation. This means the contracts compile in both the CLI's `deployContract` and the webapp's in-app compiler without any `npm install`.
 
-## Step 1 — Configuration interview
+## Step 1: Configuration
 
-Per the golden rules in `/compose`, ask only what you can't derive, one question at a time. Don't ask for the app name: use `compliance-oracle` unless the user named it or the project already has that app (the app-name rule in `/compose`), state it before any wallet or contract step (it salts every `deployContract` in Step 2), and set it as the top-level `name:` in `compose.yaml`. Then ask:
+Per the golden rules in `/compose`, take everything the user already said and use the recommended option for the rest. In CLI mode (Bash available) do not stop to ask these questions: use the defaults below, run locally against a fork (`--fork-chains`), and list the choices in your final message so the user can change them. Ask first only before a cloud deploy or `deployContract`. (The in-app `deployComposeApp` flow above is different: it asks, except for the app name, which it defaults and states before any wallet or contract step.)
 
-1. **"Is this a single-payee system (like a payment gateway or deposit flow) or a multi-payee system (like P2P transfers)?"**
+1. **App name**: default `compliance-oracle` unless the user named one; set it as the top-level `name:` in `compose.yaml`. The name is hard to change later: it scopes named wallets and participates in the CREATE2 salt for every `deployContract` (Step 2), so tell the user what you chose.
+2. **"Is this a single-payee system (like a payment gateway or deposit flow) or a multi-payee system (like P2P transfers)?"**
    - **Single payee (recommended for getting started)** — all approved payments go to one configured `recipient` address. The recipient is separate from the oracle and can be updated on the contract independently via `setRecipient()`. Use the single-payee contract variant and `TransferRequested(uint256,address,uint256)` event.
    - **Multi payee (P2P)** — the sender specifies the recipient per transfer. Use the P2P contract variant and `TransferRequested(uint256,address,address,uint256)` event.
-2. **"Which compliance/wallet screening API do you want to use?"**
+3. **"Which compliance/wallet screening API do you want to use?"**
    - **Webacy (recommended)** — simple REST API, one API key. Sign up at https://developers.webacy.co/ — you can create a demo API key right after signup.
    - **Mock mode** — hardcoded allow/deny list, no API key needed. Good for testing the flow before committing to a provider. Remove `WEBACY_API_KEY` from `compose.yaml`'s `secrets` array.
    - **Bring your own** — scaffolds the `screenWallet()` function signature; you fill in the body.
-3. **"Which chain?"** — **Base Sepolia (recommended)** — free, gas-sponsored, and you mint your own test USDC. Any EVM chain Compose supports works (Ethereum Sepolia, Polygon Amoy, Arbitrum Sepolia, etc. for testnet; Base, Ethereum, Polygon, Arbitrum, Optimism, etc. for mainnet). Use the camelCase form in TS (`baseSepolia`) and the compose network name in `compose.yaml` (`base_sepolia`).
-4. **"What risk threshold?"** — Risk score is 0-100; senders scoring at or above the threshold are rejected. Default `50`. Set `RISK_THRESHOLD` in `src/lib/constants.ts`.
-5. **"Do you want to enable OFAC/sanctions screening?"** *(Webacy only — skip for mock mode and bring-your-own.)* Webacy offers a separate sanctions endpoint that checks if a wallet appears on OFAC or other sanctions lists. This is a hard gate (sanctioned = instant reject, no threshold). Recommended for regulated or fintech use cases. Default `false`. Set `SANCTIONS_CHECK_ENABLED` in `src/lib/constants.ts`. Uses the same `WEBACY_API_KEY` — no extra credentials needed.
-6. **Recipient (single-payee only)** — **"What address should approved payments be sent to?"** They can provide an address now, or use the oracle wallet address for testing (simplest — "I'll use the oracle wallet for now"). This can be changed later via `setRecipient()` on the contract. The recipient becomes the third constructor arg.
+4. **"Which chain?"** — **Base Sepolia (recommended)** — free, gas-sponsored, and you mint your own test USDC. Any EVM chain Compose supports works (Ethereum Sepolia, Polygon Amoy, Arbitrum Sepolia, etc. for testnet; Base, Ethereum, Polygon, Arbitrum, Optimism, etc. for mainnet). Use the camelCase form in TS (`baseSepolia`) and the compose network name in `compose.yaml` (`base_sepolia`).
+5. **"What risk threshold?"** — Risk score is 0-100; senders scoring at or above the threshold are rejected. Default `50`. Set `RISK_THRESHOLD` in `src/lib/constants.ts`.
+6. **"Do you want to enable OFAC/sanctions screening?"** *(Webacy only — skip for mock mode and bring-your-own.)* Webacy offers a separate sanctions endpoint that checks if a wallet appears on OFAC or other sanctions lists. This is a hard gate (sanctioned = instant reject, no threshold). Recommended for regulated or fintech use cases. Default `false`. Set `SANCTIONS_CHECK_ENABLED` in `src/lib/constants.ts`. Uses the same `WEBACY_API_KEY` — no extra credentials needed.
+7. **Recipient (single-payee only)** — **"What address should approved payments be sent to?"** They can provide an address now, or use the oracle wallet address for testing (simplest — "I'll use the oracle wallet for now"). This can be changed later via `setRecipient()` on the contract. The recipient becomes the third constructor arg.
 
 ## Step 2 — Oracle wallet and contract deploy
 

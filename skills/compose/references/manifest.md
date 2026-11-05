@@ -48,8 +48,8 @@
 
 ```yaml
 - type: onchain_event
-  network: polygon_amoy # snake_case required
-  contract: "0xYourContractAddress" # 0x + 40 hex
+  network: polygon_amoy # required, snake_case
+  contract: "0xYourContractAddress" # required, 0x + 40 hex; one trigger watches one contract
   events:
     - "Transfer(address,address,uint256)" # viem signature strings, optional
   dataset_version: "..." # optional

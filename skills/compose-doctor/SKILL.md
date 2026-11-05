@@ -24,6 +24,15 @@ Before running any commands, check if you have the `Bash` tool available:
 
 ## Diagnostic Workflow
 
+### Step 0: App source on disk that won't start locally
+
+When the user has the app's source and the symptom is that `goldsky compose start` fails, or the app was never deployed, debug it locally first. No login or cloud app is needed, so skip Steps 1 to 3 until the problem is a deployed app.
+
+1. If `goldsky compose --version` prints `compose CLI is not installed`, install it (`goldsky compose install`, or `/auth-setup`'s installer with `compose`) and continue. Do not stop at "the CLI is missing" and fix by reading alone.
+2. Read `compose.yaml` and every task file against `skills/compose/references/manifest.md` (trigger fields, `env`, `secrets`, import rule).
+3. Before editing anything, run `goldsky compose start` from the app directory to see the real first error (`Manifest validation failed`, `Local secret validation failed`, bundling errors), then fix errors one at a time and re-run. Reading against the reference in step 2 finds suspects; `start` confirms them. `start` does not watch files and does not exit on its own: run it with a timeout or in the background, and restart it after each fix.
+4. Finish only when `start` reports `Startup complete!`. For a task you changed, also run `goldsky compose callTask <task> '{}' --env local` against the running server and show the result.
+
 ### Step 1 — Verify Auth
 
 `goldsky project list 2>&1`. If not logged in, use `/auth-setup`.
@@ -136,6 +145,7 @@ Present findings in this format:
 | `Invalid manifest: api_version is required for deployment.` | Missing `api_version` at top of compose.yaml | Add `api_version: stable` (or a semver) |
 | `Invalid manifest: api_version "<v>" is not valid.` | Bad version value | Use `stable`, `preview`, `canary`, or semver |
 | `Project name must start and end with a letter or number` | Manifest `name` fails `/^[a-zA-Z0-9]([a-zA-Z0-9_\-]*[a-zA-Z0-9])?$/` | Start and end with a letter or number; letters, numbers, underscores, hyphens. Uppercase and leading digits are fine |
+| `403` `Compose requires a Scale plan. Visit https://app.goldsky.com/dashboard/settings to upgrade, or reach out to sales@goldsky.com.` | Account is on Starter; Compose deploy and cloud features need Scale | Upgrade at https://app.goldsky.com/dashboard/settings by adding a card (or contact sales@goldsky.com), then retry the deploy |
 | `409` / name conflict on deploy | Another app in the project canonicalizes to the same name (lowercase, `[-_]+`->`-`), e.g. `my-app` vs `My_App` vs `my__app` | Pick a name that is distinct after canonicalization |
 | `<task>.name must start with a letter or number, and contain only letters, numbers, underscores, hyphens, and dots` | Task name regex fail | match `/^[a-zA-Z0-9][a-zA-Z0-9_.\-]*$/`. Hyphens, dots, and leading digits are now allowed; a **leading underscore is not** (rename `_internal_task`) |
 | `<task>.triggers[N].authentication must be either 'auth_token' or 'none'`                                           | HTTP trigger auth wrong                                            | set to one of the two values                                        |

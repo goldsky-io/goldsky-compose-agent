@@ -9,7 +9,7 @@ This template supplies only what's specific to the VRF app — how it works and 
 
 **Before anything else — before you answer, ask a question, scaffold a file, or call `deployComposeApp` — load the two base skills this template depends on:**
 
-1. **`Skill(compose)`** — the always-on Compose guide: the golden rules (never assume anything about the app on the user's behalf; ask when unsure) and general build guidance.
+1. **`Skill(compose)`**, the always-on Compose guide: the golden rules (derive from the request, default the rest and state the assumptions, confirm before anything that spends real funds or deploys to cloud) and general build guidance.
 2. **Read `skills/compose/references/manifest.md`** (then `cli.md`, `task-context.md`, `wallets-and-gas.md` as needed) — the manifest / field / API reference; consult before writing any `compose.yaml` or task file. In the webapp chatbot, retrieve it with `searchKB` (see `/compose` Step 0), not `loadSkill`.
 
 This template deliberately omits those rules and that reference — they are **required** to build correctly and are not repeated here. Do not proceed until both are loaded.
@@ -493,11 +493,11 @@ contract RandomnessConsumer {
 Pull just the VRF example into a fresh directory (no git history):
 
 ```bash
-npx -y degit goldsky-io/documentation-examples/compose/VRF#6abe62878cb92f2569538ba9572b049ed5949a01 compose-vrf
+npx -y degit goldsky-io/documentation-examples/compose/VRF compose-vrf
 cd compose-vrf
 ```
 
-If `npx -y degit` is unavailable, fall back to a sparse clone:
+`degit` fetches the default branch (it cannot fetch an arbitrary commit). If it is unavailable, or you need the exact commit this skill was written against, use a sparse clone:
 
 ```bash
 git clone --filter=blob:none --sparse https://github.com/goldsky-io/documentation-examples.git
@@ -512,12 +512,13 @@ If `goldsky compose --version` prints `compose CLI is not installed`, run `golds
 
 VRF-specific, Foundry: **Foundry (`forge` / `cast`) is NOT required on the recommended path.** `deployContract` routes through the cloud's Alchemy bundler, which covers Ethereum, Sepolia, Polygon, Polygon Amoy, Arbitrum, Arbitrum Sepolia, Optimism, Optimism Sepolia, Base and Base Sepolia (chain IDs 1, 11155111, 137, 80002, 42161, 421614, 10, 11155420, 8453, 84532). On a chain outside that set the deploy fails with `No Alchemy bundler URL for chain <id>`, so use the `forge create` fallback there. Multi-provider coverage is tracked as FOU-991. Branch B's `goldsky compose deployContract` bundles its own compiler, and the Step 8 smoke test uses the gas-sponsored `goldsky compose writeContract`. Foundry IS required for that forge fallback or the **cast-based** smoke-test alternative in Step 8, so on the recommended path, treat Foundry as optional.
 
-## Step 1 — Configuration interview
+## Step 1: Configuration
 
-Ask one question at a time; let each answer inform the next. Use readable labels and translate to machine values yourself. Don't ask for the app name: use `vrf-app` unless the user named it or the project already has that app (the app-name rule in `/compose`), state it before any wallet or contract step, and set it as the top-level `name:` in `compose.yaml` (the degit scaffold ships a stale `name: "compose-vrf"` — overwrite it).
+Per the golden rules in `/compose`, take everything the user already said and use the recommended option for the rest. In CLI mode (Bash available) do not stop to ask these questions: use the defaults below, run locally against a fork (`--fork-chains`), and list the choices in your final message so the user can change them. Ask first only before a cloud deploy or `deployContract`. (The in-app `deployComposeApp` flow above is different: it asks, except for the app name.)
 
-1. **"Which chain?"** — **Base Sepolia (recommended)** because it has the ready, fully-unpermissioned shared contract (nothing to deploy). Other chains require deploying your own. Use the camelCase form in TS (`baseSepolia`) and snake_case in `compose.yaml` (`base_sepolia`).
-2. **"RandomnessConsumer contract?"** (ask right after the chain) — two options:
+1. **App name**: default `vrf-app` unless the user named one; set it as the top-level `name:` in `compose.yaml` (the degit scaffold ships a stale `name: "compose-vrf"`, so overwrite it). The name is hard to change later: it scopes named wallets and participates in the CREATE2 salt for every `deployContract`, so tell the user what you chose.
+2. **"Which chain?"** — **Base Sepolia (recommended)** because it has the ready, fully-unpermissioned shared contract (nothing to deploy). Other chains require deploying your own. Use the camelCase form in TS (`baseSepolia`) and snake_case in `compose.yaml` (`base_sepolia`).
+3. **RandomnessConsumer contract**: two options:
    - **Reuse the shared contract on Base Sepolia (recommended)** — nothing to deploy. Wire `0x6273AB73C95Ba2233281F1eb8aa3b21D9352AD6d` (mention the address in prose, not in any option label). Demos/getting-started only, not production.
    - **Deploy my own** — see Step 3, Branch B. (Required on any chain other than Base Sepolia.)
 
