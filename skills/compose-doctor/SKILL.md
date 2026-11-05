@@ -24,6 +24,15 @@ Before running any commands, check if you have the `Bash` tool available:
 
 ## Diagnostic Workflow
 
+### Step 0: App source on disk that won't start locally
+
+When the user has the app's source and the symptom is that `goldsky compose start` fails, or the app was never deployed, debug it locally first. No login or cloud app is needed, so skip Steps 1 to 3 until the problem is a deployed app.
+
+1. If `goldsky compose --version` prints `compose CLI is not installed`, install it (`goldsky compose install`, or `/auth-setup`'s installer with `compose`) and continue. Do not stop at "the CLI is missing" and fix by reading alone.
+2. Read `compose.yaml` and every task file against `skills/compose/references/manifest.md` (trigger fields, `env`, `secrets`, import rule).
+3. Run `goldsky compose start` from the app directory and fix the first error it prints (`Manifest validation failed`, `Local secret validation failed`, bundling errors). `start` does not watch files and does not exit on its own: run it with a timeout or in the background, and restart it after each fix.
+4. Finish only when `start` reports `Startup complete!`. For a task you changed, also run `goldsky compose callTask <task> '{}' --env local` against the running server and show the result.
+
 ### Step 1 — Verify Auth
 
 `goldsky project list 2>&1`. If not logged in, use `/auth-setup`.
