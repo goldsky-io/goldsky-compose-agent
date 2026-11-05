@@ -244,6 +244,20 @@ const tx = await wallet.writeContract(
 );
 ```
 
+### Reading a contract
+
+`readContract` is a wallet method. The signature string must declare its outputs, and a multi-output function returns an array in output order:
+
+```ts
+const [, answer] = await wallet.readContract<[bigint, bigint, bigint, bigint, bigint]>(
+  evm.chains.baseSepolia,
+  env.FEED_ADDRESS,
+  "latestRoundData() returns (uint80,int256,uint256,uint256,uint80)",
+  [],
+);
+const price = Number(answer) / 1e8; // apply the contract's decimals yourself
+```
+
 ### BYO EOA with sponsored gas (opt-in)
 
 ```ts
