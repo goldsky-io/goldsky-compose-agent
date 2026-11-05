@@ -33,12 +33,13 @@ The worked-example templates are starting points for whole classes of app, not j
 
 The survey against this catalog is a required build step — see **Step 3** below.
 
-## Golden rules (all modes, including the in-app deploy card)
+## Golden rules (all modes; the in-app deploy card flow still asks, because the card is interactive)
 
 - **Derive from the request, default the rest, and keep going.** Take everything you can from what the user actually said. For anything else needed to build and run the app locally (chain, cadence, token or threshold, wallet choice, contract shape), pick a sensible default that spends no real funds (a testnet, or `--fork-chains`), build and run it, and list every assumption in your final message so the user can change it. Never carry a value over from an example without saying so. Ask only when the work cannot proceed without a value only the user has (an existing contract's address and ABI, a private key, a third-party API key): then build everything else with a clearly marked placeholder and ask for that value at the end.
 - **Never synthesize the manifest, CLI, or API shape from memory.** Read `skills/compose/references/manifest.md` (and `cli.md` / `task-context.md` as needed) before emitting `compose.yaml` or a task file. This applies equally to the in-app `deployComposeApp` flow.
-- **Confirm before anything irreversible.** Ask first, showing the exact command, before anything that spends real funds, deploys to Goldsky cloud (`deploy`, `deployContract`, `writeContract`, `secret set`), or touches mainnet. Local runs and forks are not gated, so do not stall a request on questions you can answer with a stated default.
+- **Confirm before anything irreversible.** Ask first, showing the exact command, before anything that spends real funds, deploys to Goldsky cloud (`deploy`, `deployContract`, `writeContract`, `secret set`), or touches mainnet. `compose start --fork-chains` runs and runs that cannot sign with a funded key are not gated, so do not stall a request on questions you can answer with a stated default. `compose start` without `--fork-chains` uses real public RPCs and starts cron triggers immediately, so confirm first when a task can sign with a funded key (for example a BYO EOA with a funded private key) or targets mainnet. In CLI mode, ask these questions only at the point of the cloud action. Goldsky login is likewise deferred until `deploy`, `deployContract`, `secret set`, or a cloud read-back actually runs. In the in-app `deployComposeApp` flow the deploy card is interactive, so that flow still asks its configuration questions (for example the app name) up front.
 - **Author a contract when none exists.** If the app must write onchain and the user has no contract, write a minimal purpose-built Solidity contract (a counter, a value store, an oracle with the setter the task needs) and state that you did. The cloud path is `goldsky compose deployContract <file.sol>`; show the source and the exact command as the approval ask before running it (this IS the show-command-and-confirm rule, so don't double-ask). It needs Goldsky auth even for a local run. The cloud `deployContract` path is gas-sponsored on the 10-chain Alchemy set (Ethereum, Sepolia, Polygon, Polygon Amoy, Arbitrum, Arbitrum Sepolia, Optimism, Optimism Sepolia, Base, Base Sepolia: chain IDs 1, 11155111, 137, 80002, 42161, 421614, 10, 11155420, 8453, 84532). On a chain outside that set it fails with `No Alchemy bundler URL for chain <id>`; say so honestly and use `forge create` with a funded key (the ABI still lands in `src/contracts/` either way; the constructor args are unchanged). Runtime task-gas sponsorship is a different, broader set, see `references/wallets-and-gas.md`. Do not tell the user that only Base / Base Sepolia can be sponsored.
+- **Without login, the contract write path stays unverified.** `deployContract` is cloud-only and needs a Goldsky token, and there is no supported way to put a contract on a `--fork-chains` fork without it. When you author a contract before the user has logged in: write the contract source and the task, wire a clearly marked placeholder address, run and verify everything that does not need the contract, and tell the user the write path stays unverified until `deployContract` runs after login. Do not invent a local deploy mechanism.
 - **Version-check before `deployContract` / `writeContract`.** Run `goldsky compose --version` (prints `goldsky compose <version>`, e.g. `goldsky compose 0.8.1`) before any flow that deploys or writes a contract. If the version is below 0.8.1, or the command/flag is unrecognized, tell the user and OFFER to run `goldsky compose update` for them — never just instruct — then re-check before continuing.
 
 ## Boundaries
@@ -56,7 +57,7 @@ Before running commands, check if the `Bash` tool is available:
 
 ## What Compose Does
 
-Compose is generally available: there is no invite, waitlist, or beta, so never tell the user it is invite-only or in beta. Anyone can sign up at https://app.goldsky.com/signup. Local development needs no account. Deploying and cloud features (`deploy`, `secret set`, wallets, `deployContract`, `writeContract`) need a **Scale** plan (a Starter plan cannot deploy Compose). A Starter account upgrades to Scale by adding a credit card.
+Compose is generally available: there is no invite, waitlist, or beta, so never tell the user it is invite-only or in beta. Anyone can sign up at https://app.goldsky.com/signup. Local development needs no account. Deploying and cloud features (`deploy`, `secret set`, `wallet create`, `deployContract`, `writeContract`) need a **Scale** plan (a Starter plan cannot deploy Compose). A Starter account upgrades to Scale by adding a credit card.
 
 - Serverless TypeScript runtime for EVM-aware tasks.
 - Three trigger types: **cron**, **HTTP**, **onchain_event**.
@@ -296,12 +297,9 @@ Drop an ABI into `src/contracts/Oracle.json`. After `goldsky compose codegen` (o
 
 Only activate when Bash is available.
 
-### Step 1 — Verify auth
+### Step 1 — Install the CLI
 
-If `goldsky compose --version` fails, follow `/auth-setup` and run its bundled installer with `compose`. Restore PATH in each new shell; keep Windows commands inside the same WSL distribution.
-
-`goldsky project list 2>&1` proves auth for the full `goldsky` CLI. With the **standalone Compose CLI**, auth is proven by any authenticated call — e.g. `goldsky compose list -t "$GOLDSKY_API_TOKEN"` (`-t`/`--token` passes a project API key). No key yet? Make one in the dashboard at **Settings → API Keys**, then pass it with `-t`. If login itself is the problem, use `/auth-setup`.
-Or export `GOLDSKY_API_TOKEN=<project token>` once and drop `-t` entirely. Precedence is `--token` > `GOLDSKY_API_TOKEN` > the token `goldsky login` wrote to `~/.goldsky/auth_token`.
+If `goldsky compose --version` fails, follow `/auth-setup` and run its bundled installer with `compose`. Restore PATH in each new shell; keep Windows commands inside the same WSL distribution. Do not check auth or ask for an API key here: login is deferred until `deploy`, `deployContract`, `secret set`, or a cloud read-back needs it (see "Verify auth first" before Step 8).
 
 ### Step 2 — Derive first, ask only the ambiguous
 
@@ -312,7 +310,7 @@ From the user's natural-language prompt, **derive** as many of these as possible
 - **Read vs write** — "track", "index", "notify" → read; "update", "set", "submit" → write.
 - **Wallet** — write + sponsored gas → smart wallet (default); user supplied a PK → BYO EOA with `sponsorGas: true`.
 - **Secrets vs config** — only *sensitive* values (API keys, private keys, auth tokens) go in the `secrets:` array. A **contract address is plain non-secret config** — put it in `env:` (manifest) or in the task file, not in `secrets`.
-- **Target contract**: if the app writes onchain, it needs a contract to write to. If the user names an existing one, use its address (+ ABI; the ABI only matters for pre-existing contracts, `deployContract` saves it automatically). If they have none, author a minimal one (see the Golden rules), and run locally against a fork until the user approves the cloud deploy command.
+- **Target contract**: if the app writes onchain, it needs a contract to write to. If the user names an existing one, use its address (+ ABI; the ABI only matters for pre-existing contracts, `deployContract` saves it automatically). If they have none, author a minimal one (see the Golden rules), wire a clearly marked placeholder address, run and verify everything that does not need the contract, and say the write path stays unverified until `deployContract` runs after login and the user approves the command.
 - **`api_version`** — default to `stable` unless user asks otherwise.
 
 Ask only for values nothing above can default (an existing contract's address, a private key, a third-party API key), and only after building everything else.
@@ -348,6 +346,9 @@ Replace the scaffold's task file with logic derived from the prompt. Use the cap
 `goldsky compose start`. Smart wallets require `--fork-chains` locally; use a BYO EOA if the user wants to test against a live testnet. The `--fork-chains` fork is in-memory: a contract you deployed to it, and any other chain state, is gone when you restart `start`, so redeploy after each restart. For HTTP tasks: `goldsky compose callTask <name> '<json>' --env local` in another terminal (`callTask` defaults to `--env cloud`, i.e. the deployed app; `--env local` targets the running dev server and auto-detects its port from `.compose/.port`, or pass `-p <port>`).
 
 **Local secrets.** `compose start` exits with `Local secret validation failed: ... not set in your local .env file` when a name in `secrets:` has no non-empty value in `.env`. If the user has not given you a value yet (a third-party API key, say), write an obvious placeholder such as `REPLACE_ME` to `.env` so the app starts and you can verify the wiring (the upstream API will probably reject the call, which is expected). Never invent a real-looking key and never hardcode a value in the manifest or task. Tell the user to replace the placeholder, restart `compose start`, and set the cloud value with `goldsky compose secret set <NAME> --value <value>` or `deploy --sync-env`. `.env` is gitignored by `compose init`; confirm that before telling the user to paste a key into it.
+
+**Verify auth first.** `goldsky project list 2>&1` proves auth for the full `goldsky` CLI. With the **standalone Compose CLI**, auth is proven by any authenticated call, e.g. `goldsky compose list -t "$GOLDSKY_API_TOKEN"` (`-t`/`--token` passes a project API key). No key yet? Make one in the dashboard at **Settings → API Keys**, then pass it with `-t`. If login itself is the problem, use `/auth-setup`.
+Or export `GOLDSKY_API_TOKEN=<project token>` once and drop `-t` entirely. Precedence is `--token` > `GOLDSKY_API_TOKEN` > the token `goldsky login` wrote to `~/.goldsky/auth_token`.
 
 ### Step 8 — Deploy
 
