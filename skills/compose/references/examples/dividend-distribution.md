@@ -1571,7 +1571,7 @@ cd documentation-examples && git checkout 6abe62878cb92f2569538ba9572b049ed5949a
 
 If the user already cloned the example, skip this and `cd` into it.
 
-**Before any wallet or contract step, ask the app name — the FIRST interview question:** *"What should the app be called? (suggest `corporate-actions`)"*. The name is hard to change later: it scopes named wallets (e.g. `corp-actions-operator`) and participates in the CREATE2 salt for every `deployContract` (Step 1 Branch B reads the app name straight from `compose.yaml`), so it must be settled now. Accept the default `corporate-actions` on a shrug. The degit scaffold ships `name: "corporate-actions"` in `compose.yaml` — overwrite that `name:` with the user's chosen name before moving on.
+**App name (CLI mode):** default `corporate-actions` unless the user named one; do not stop to ask. Tell the user the name you chose in your final message, because it is hard to change later: it scopes named wallets (e.g. `corp-actions-operator`) and participates in the CREATE2 salt for every `deployContract` (Step 1 Branch B reads the app name straight from `compose.yaml`). The degit scaffold ships `name: "corporate-actions"` in `compose.yaml`; overwrite that `name:` if the user chose a different name. (The in-app `deployComposeApp` flow above asks for the name first.)
 
 ## Preflight
 

@@ -835,11 +835,11 @@ The `goldsky` CLI and auth checks are the standard Compose preflight (see `/comp
 2. **`cast`** — `cast --version`. If `cast` is missing, skip the Foundry alternative in Step 7. Do not install Foundry. Used only for that alternative (`forge` is not required — `deployContract` compiles in-CLI).
 3. **No OpenZeppelin install needed.** All contracts are self-contained — `IERC20` is inlined as a two-function interface in the escrow contract, and `MockUSDC` is a standalone ERC20 implementation. This means the contracts compile in both the CLI's `deployContract` and the webapp's in-app compiler without any `npm install`.
 
-## Step 1 — Configuration interview
+## Step 1 — Configuration
 
-Per the golden rules in `/compose`, ask only what you can't derive, one question at a time — and ask the app name first:
+Per the golden rules in `/compose`, take everything the user already said and use the recommended option for the rest. In CLI mode (Bash available) do not stop to ask these questions: use the defaults below, run locally against a fork (`--fork-chains`), and list the choices in your final message so the user can change them. Ask first only before a cloud deploy or `deployContract`. (The in-app `deployComposeApp` flow above is different: it asks, app name first.)
 
-1. **"What should the app be called? (suggest `compliance-oracle`)"** — ask FIRST, before any wallet or contract step. The name is hard to change later: it scopes named wallets and participates in the CREATE2 salt for every `deployContract` (Step 2), so it must be settled now. Accept the default `compliance-oracle` on a shrug, and set it as the top-level `name:` in `compose.yaml`.
+1. **App name**: default `compliance-oracle` unless the user named one; set it as the top-level `name:` in `compose.yaml`. The name is hard to change later: it scopes named wallets and participates in the CREATE2 salt for every `deployContract` (Step 2), so tell the user what you chose.
 2. **"Is this a single-payee system (like a payment gateway or deposit flow) or a multi-payee system (like P2P transfers)?"**
    - **Single payee (recommended for getting started)** — all approved payments go to one configured `recipient` address. The recipient is separate from the oracle and can be updated on the contract independently via `setRecipient()`. Use the single-payee contract variant and `TransferRequested(uint256,address,uint256)` event.
    - **Multi payee (P2P)** — the sender specifies the recipient per transfer. Use the P2P contract variant and `TransferRequested(uint256,address,address,uint256)` event.
