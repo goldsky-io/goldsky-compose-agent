@@ -60,7 +60,7 @@ Before running commands, check if the `Bash` tool is available:
 - Three trigger types: **cron**, **HTTP**, **onchain_event**.
 - **Smart wallets** (managed by Goldsky, gas-sponsored by default) or **BYO EOA** wallets (user-supplied private key).
 - Built-in secrets, collections (durable storage), contract deployment (`deployContract`), and typed contract bindings via codegen.
-- `compose start` for hot-reload local dev; `compose deploy` to ship; `compose logs -f` to tail. `compose runs`, `collections query`, `source`, `download`, and `history` to inspect what the deployed app actually did and what code it is actually running.
+- `compose start` for local dev (it does not watch files: restart it after editing a task or the manifest); `compose deploy` to ship; `compose logs -f` to tail. `compose runs`, `collections query`, `source`, `download`, and `history` to inspect what the deployed app actually did and what code it is actually running.
 
 **Deploying a contract** is a built-in capability: `goldsky compose deployContract <file.sol>` compiles in-CLI and CREATE2-deploys through the gas-sponsored Compose wallet, auto-saves the ABI to `src/contracts/`, and prints the address + deploy block. It needs compose CLI ≥ 0.8.1 (`goldsky compose update`). See `references/cli.md` (Contracts) for the flags. The cloud deploy path covers the 10-chain Alchemy set listed in the Golden rules; runtime sponsorship is broader.
 
@@ -87,7 +87,7 @@ goldsky compose --version
 ```bash
 goldsky compose init <app-name>            # scaffolds a Bitcoin-oracle example (name argument required in non-interactive shells)
 cd <app-name>
-goldsky compose start                      # hot-reload local server on :4000 (walks to :4009 if taken; writes .compose/.port)
+goldsky compose start                      # local server on :4000 (walks to :4009 if taken; writes .compose/.port); restart it after code changes
 goldsky compose deploy                   # bundle + upload to cloud
 goldsky compose status                   # expect RUNNING
 goldsky compose logs -f                  # stream logs
