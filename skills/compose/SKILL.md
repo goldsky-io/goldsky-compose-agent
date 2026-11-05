@@ -331,6 +331,8 @@ Replace the scaffold's task file with logic derived from the prompt. Use the cap
 
 `goldsky compose start`. Smart wallets require `--fork-chains` locally; use a BYO EOA if the user wants to test against a live testnet. For HTTP tasks: `goldsky compose callTask <name> '<json>' --env local` in another terminal (`callTask` defaults to `--env cloud`, i.e. the deployed app; `--env local` targets the running dev server and auto-detects its port from `.compose/.port`, or pass `-p <port>`).
 
+**Local secrets.** `compose start` exits with `Local secret validation failed: ... not set in your local .env file` when a name in `secrets:` has no non-empty value in `.env`. If the user has not given you a value yet (a third-party API key, say), write an obvious placeholder such as `REPLACE_ME` to `.env` so the app starts and you can verify the wiring (the upstream API will probably reject the call, which is expected). Never invent a real-looking key and never hardcode a value in the manifest or task. Tell the user to replace the placeholder, restart `compose start`, and set the cloud value with `goldsky compose secret set <NAME> --value <value>` or `deploy --sync-env`. `.env` is gitignored by `compose init`; confirm that before telling the user to paste a key into it.
+
 ### Step 8 — Deploy
 
 `goldsky compose deploy`. Expect progress: "Building Dedicated app database…" → "Deploying app…" → "Provisioning infra…" (can take a minute or two on first deploy).
