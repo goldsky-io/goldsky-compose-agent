@@ -98,7 +98,7 @@ type OnchainEvent = {
 };
 ```
 
-For `onchain_event`-triggered tasks, `params` contains `{ log: OnchainEvent }` plus chain-specific metadata. `decodeEventLog(abi, params.log)` returns the decoded struct.
+For `onchain_event`-triggered tasks, the payload argument is the `OnchainEvent` itself: `main(context, event: OnchainEvent)`, then `decodeEventLog(abi, event)` (or `evm.contracts.<Name>.decodeEventLog(event)` after codegen) returns the decoded struct. It is not wrapped in `{ log }`. `onchain_event` triggers fire only for a deployed app, never under `compose start`; to exercise the task locally, `goldsky compose callTask <task> '<event json>' --env local` with a sample `OnchainEvent` (copy a real log from a block explorer).
 
 ### IWallet
 

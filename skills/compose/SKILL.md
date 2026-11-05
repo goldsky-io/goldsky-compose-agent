@@ -218,19 +218,19 @@ Invoke: `curl -X POST -H "Authorization: Bearer $TOKEN" -d '{"amount": 42}' http
 ```
 
 ```ts
-import type { TaskContext } from "compose";
+import type { TaskContext, OnchainEvent } from "compose";
 
-export async function main(
-  { evm, logEvent }: TaskContext,
-  params: { log: { topics: string[]; data: string; address: string } },
-) {
+// The payload is the raw log itself, not wrapped in { log }.
+export async function main({ evm, logger }: TaskContext, event: OnchainEvent) {
   const decoded = await evm.decodeEventLog(
     [{ type: "event", name: "Transfer", inputs: [/* ABI inputs */] }],
-    params.log,
+    event,
   );
-  await logEvent({ code: "transfer", message: "seen", data: decoded });
+  logger.info("transfer seen", { decoded });
 }
 ```
+
+`onchain_event` triggers fire only for a deployed app, not under `compose start`. To test locally, call the task with a sample log: `goldsky compose callTask on_transfer '<OnchainEvent json>' --env local`.
 
 ### Smart wallet + sponsored writeContract
 
