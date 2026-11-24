@@ -13,7 +13,7 @@
 | Field         | Type                 | Required    | Notes                                                                                 |
 | ------------- | -------------------- | ----------- | ------------------------------------------------------------------------------------- |
 | `name`        | string               | yes         | `/^[a-zA-Z0-9]([a-zA-Z0-9_\-]*[a-zA-Z0-9])?$/`, starts and ends with a letter or number; letters, numbers, underscores, hyphens. Uppercase and leading digits are allowed. The platform additionally rejects a name that canonicalizes (lowercase, `[-_]+`->`-`) onto an existing app's, with a 409, so `my-app`, `My_App`, and `my__app` cannot coexist |
-| `api_version` | string               | deploy-only | semver (e.g. `0.1.0`) or `stable` / `preview` / `canary` (any `internal-*` prefix is also accepted) |
+| `api_version` | string               | no          | semver (e.g. `0.1.0`) or `stable` / `preview` / `canary` (any `internal-*` prefix is also accepted). If omitted, the app runs on `stable` |
 | `tasks`       | array                | yes         | Non-empty                                                                             |
 | `secrets`     | string[]             | no          | Names only — values set via `compose secret set`                                      |
 | `env`         | `{ local?, cloud? }` | no          | **`env`'s only valid children are `local` and `cloud`** — each a `Record<string, string>` flattened into `context.env`. A bare `env.MY_VAR` (a var name directly under `env`) is rejected: "not a valid key". A hardcoded per-app constant belongs in the task file, not here. |

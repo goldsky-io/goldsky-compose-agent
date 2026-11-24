@@ -142,7 +142,7 @@ Present findings in this format:
 
 | Log / error message                                                                                                 | Cause                                                              | Fix                                                                 |
 | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| `Invalid manifest: api_version is required for deployment.` | Missing `api_version` at top of compose.yaml | Add `api_version: stable` (or a semver) |
+| `Invalid manifest: api_version is required for deployment.` | Older Compose CLI; current CLIs deploy a manifest without `api_version` on `stable` | Upgrade the Compose CLI, or add `api_version: stable` |
 | `Invalid manifest: api_version "<v>" is not valid.` | Bad version value | Use `stable`, `preview`, `canary`, or semver |
 | `Project name must start and end with a letter or number` | Manifest `name` fails `/^[a-zA-Z0-9]([a-zA-Z0-9_\-]*[a-zA-Z0-9])?$/` | Start and end with a letter or number; letters, numbers, underscores, hyphens. Uppercase and leading digits are fine |
 | `403` `Compose requires a Scale plan. Visit https://app.goldsky.com/dashboard/settings to upgrade, or reach out to sales@goldsky.com.` | Account is on Starter; Compose deploy and cloud features need Scale | Upgrade at https://app.goldsky.com/dashboard/settings by adding a card (or contact sales@goldsky.com), then retry the deploy |
